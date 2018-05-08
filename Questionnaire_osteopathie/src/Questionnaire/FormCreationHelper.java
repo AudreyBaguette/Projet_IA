@@ -154,6 +154,29 @@ public class FormCreationHelper {
 		return res;
 	}
 	
+	public static boolean fincode(ArrayList<String> a) {
+		boolean res = false;
+		if(a.size()>0) {
+			String atester = a.get(0);
+			atester = atester.trim();
+		
+			if(atester.charAt(atester.length()-1)== ']') {
+				String compare = "[FINPRINCIPAL]";
+				boolean difference = false;
+				for(int i = compare.length()-1; i>=0 && !difference;i--) {
+					if(atester.charAt(i)!=compare.charAt(i)) {
+						difference = true;
+					}
+				}
+				if(!difference) {
+					res = true ;
+				}
+			}
+		}
+		
+		return res;
+	}
+	
 
 
 }
