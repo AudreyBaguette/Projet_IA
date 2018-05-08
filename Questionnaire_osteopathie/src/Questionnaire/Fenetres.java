@@ -106,6 +106,7 @@ public class Fenetres {
 					  } else {
 						  lblMessageintro.setText("Le fichier " + fichierQuestionnaire.getName() + " n'a pas le bon format.");
 					  }
+					  
 					}
 				} catch(Exception exAjouter){
 					lblMessageintro.setText("Fichier invalide");
