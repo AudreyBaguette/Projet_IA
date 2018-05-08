@@ -14,7 +14,7 @@ public class CSVParser {
 		    try {
 		      BufferedReader br = new BufferedReader(new FileReader(filename));
 		      while ((line = br.readLine()) != null){
-		        ArrayList<String> dataAsString = new ArrayList<String>(Arrays.asList(line.split("|")));
+		        ArrayList<String> dataAsString = new ArrayList<String>(Arrays.asList(line.split("\\|")));
 		        data.add(dataAsString);
 		      }
 		      br.close();
