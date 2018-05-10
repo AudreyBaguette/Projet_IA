@@ -14,11 +14,26 @@ public class CSVParser {
 		    try {
 		      BufferedReader br = new BufferedReader(new FileReader(filename));
 		      while ((line = br.readLine()) != null){
-		        ArrayList<String> dataAsString = new ArrayList<String>(Arrays.asList(line.split("\\|")));
-		        data.add(dataAsString);
+		    	ArrayList<String> dataAsString = new ArrayList<String>(Arrays.asList(line.split("\\|")));
+		    	if(FormCreationHelper.isaquestion(dataAsString) ||
+		    			FormCreationHelper.isatitle(dataAsString) ||
+		    			!FormCreationHelper.hasmarqueur(dataAsString).equals("") ||
+		    			FormCreationHelper.isquestiontoaskmanytimes(dataAsString)){
+		    		/**
+		    		for(int i = 0; i < dataAsString.size(); i++){
+		    			String string = dataAsString.get(i);
+			    		byte[] b = string.getBytes("UTF-16");
+			    		dataAsString.set(i, new String(b, "UTF-8"));
+		    		}
+		    		*/
+		    		data.add(dataAsString);
+		    		
+		    	}
 		      }
 		      br.close();
-		    }catch(IOException e) {e.printStackTrace();}
+		    }catch(IOException e) {
+		    	e.printStackTrace();
+		    }
 		    return data;
 		  }
 }

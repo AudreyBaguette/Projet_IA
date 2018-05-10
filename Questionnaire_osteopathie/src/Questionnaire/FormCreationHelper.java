@@ -7,11 +7,13 @@ public class FormCreationHelper {
 	public static boolean isaquestion(ArrayList<String> a) {
 		boolean res = false;
 		if(a.size()>0) {
-			String atester = a.get(0);
-			atester = atester.trim();
-		
-			if(atester.charAt(atester.length()-1)== '?'|| atester.charAt(atester.length()-1)== ':') {
-				res = true;
+			if(a.get(0).length() > 0){
+				String atester = a.get(0);
+				atester = atester.trim();
+			
+				if(atester.charAt(atester.length()-1)== '?'|| atester.charAt(atester.length()-1)== ':') {
+					res = true;
+				}
 			}
 		}
 		return res;
@@ -24,7 +26,7 @@ public class FormCreationHelper {
 			atester = atester.trim();
 		
 			if(atester.length()>=3) {
-				if(atester.charAt(atester.length()-1)== '.' && atester.charAt(atester.length()-2)== '.'&& atester.charAt(atester.length()-3)== '.') {
+				if(atester.endsWith("...")) {
 					res = true; //... en un char ?
 				}
 			}
@@ -97,7 +99,7 @@ public class FormCreationHelper {
 			atester = atester.trim();
 		
 			if(atester.length()>=3) {
-				if(atester.charAt(atester.length()-1)== '1' && atester.charAt(atester.length()-2)== '+'&& atester.charAt(atester.length()-3)== '+') {
+				if(atester.endsWith("++1")) {
 					res = true; 
 				}
 			}
@@ -131,26 +133,27 @@ public class FormCreationHelper {
 	public static String hasmarqueur(ArrayList<String> a) { //renvoie chaine vide si pas de marqueur, renvoie marqueur sinon
 		String res = "";
 		if(a.size()>0) {
-			String atester = a.get(0);
-			atester= atester.trim();
-			
-			if(atester.charAt(0)=='(') {
-				boolean fini = false;
-				for(int i=1;i<atester.length() && !fini;i++) {
-					if(atester.charAt(i)==')') {
-						fini = true;
+			if(a.get(0).length() > 0){
+				String atester = a.get(0);
+				atester= atester.trim();
+				
+				if(atester.charAt(0)=='(') {
+					boolean fini = false;
+					for(int i=1;i<atester.length() && !fini;i++) {
+						if(atester.charAt(i)==')') {
+							fini = true;
+						}
+						else {
+							res = res+atester.charAt(i);
+						}
 					}
-					else {
-						res = res+atester.charAt(i);
+					if(!fini) {
+						res ="";
 					}
-				}
-				if(!fini) {
-					res ="";
 				}
 			}
+		
 		}
-		
-		
 		return res;
 	}
 	
@@ -177,6 +180,25 @@ public class FormCreationHelper {
 		return res;
 	}
 	
-
+	public static String retireMarqueurs(String phrase){
+		//Retirer "++1"
+		if(phrase.endsWith("++1")){
+			phrase = phrase.substring(0, phrase.length()-3);
+		}
+		//Retirer "(x)" en fin de commentaire
+		if(phrase.endsWith(")")){
+			phrase = phrase.substring(0, phrase.indexOf("("));
+		}
+		//Retirer "(X)" en debut de commentaire
+		if(phrase.startsWith("(")){
+			phrase = phrase.substring(phrase.indexOf(")")+1);
+		}
+		//Retirer etoile s'il y a
+		if(phrase.contains("*")){
+			int index = phrase.indexOf("*");
+			phrase = phrase.substring(0, index-1);
+		}
+		return phrase;
+	}
 
 }
