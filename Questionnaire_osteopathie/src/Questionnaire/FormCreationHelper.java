@@ -34,6 +34,36 @@ public class FormCreationHelper {
 		return res;
 	}
 	
+	public static boolean isafiletoopen(ArrayList<String> a){
+		boolean res = false;
+		if(a.size()>0) {
+			String atester = a.get(0);
+			atester = atester.trim();
+		
+			if(atester.length()>=3) {
+				if(atester.startsWith("Questionnaire")) {
+					res = true; //... en un char ?
+				}
+			}
+		}
+		return res;
+	}
+	
+	public static boolean isanend(ArrayList<String> a){
+		boolean res = false;
+		if(a.size()>0) {
+			String atester = a.get(0);
+			atester = atester.trim();
+		
+			if(atester.length()>=3) {
+				if(atester.startsWith("fin")) {
+					res = true; //... en un char ?
+				}
+			}
+		}
+		return res;
+	}
+	
 	public static boolean tocomplite(ArrayList<String> a) { //renvoie vrai si 4 collone contient [TEXTE]
 		boolean res = false;
 		if(a.size()>3) {
@@ -163,20 +193,12 @@ public class FormCreationHelper {
 			String atester = a.get(0);
 			atester = atester.trim();
 		
-			if(atester.charAt(atester.length()-1)== ']') {
-				String compare = "[FINPRINCIPAL]";
-				boolean difference = false;
-				for(int i = compare.length()-1; i>=0 && !difference;i--) {
-					if(atester.charAt(i)!=compare.charAt(i)) {
-						difference = true;
-					}
-				}
-				if(!difference) {
-					res = true ;
+			if(atester.length()>=3) {
+				if(atester.startsWith("[FINPRINCIPAL]")) {
+					res = true; 
 				}
 			}
 		}
-		
 		return res;
 	}
 	
@@ -191,6 +213,8 @@ public class FormCreationHelper {
 		}
 		//Retirer "(X)" en debut de commentaire
 		if(phrase.startsWith("(")){
+			phrase = phrase.substring(phrase.indexOf(")")+1);
+			//S'il y a deux marqueurs entre paretheses, il faut retirer les deux
 			phrase = phrase.substring(phrase.indexOf(")")+1);
 		}
 		//Retirer etoile s'il y a

@@ -32,7 +32,10 @@ public class Fenetres {
 	private JFrame frame;
 	private ArrayList<ArrayList<String>> questionnaire;
 	private static TreeMap<Integer, Vector<String>> reponse;
-	private Vector<String> listeQuestionnaires;
+	private TreeMap<String, String> listeQuestionnaires;
+	private Vector<String> aExclure;
+	private Vector<Integer> lignesCommentaire;
+	private String commentaire;
 
 	/**
 	 * Launch the application.
@@ -66,7 +69,7 @@ public class Fenetres {
 		frame.setBounds(100, 100, 554, 214);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
-		JLabel lblAcceuil = new JLabel("Bonjour! Bienvenue dans ce questionnaire automatis\u00E9.");
+		JLabel lblAcceuil = new JLabel("<html>Bonjour! Bienvenue dans ce questionnaire automatis\u00E9.</html>");
 		lblAcceuil.setFont(new Font("Trebuchet MS", Font.PLAIN, 20));
 		lblAcceuil.setHorizontalAlignment(SwingConstants.CENTER);
 		frame.getContentPane().add(lblAcceuil, BorderLayout.NORTH);
@@ -84,7 +87,15 @@ public class Fenetres {
 		btnCommencer.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				System.out.println(questionnaire.toString());
-				activeQuestionnaire(questionnaire, 0, 0);
+				aExclure = new Vector<String>();
+				aExclure.addElement("");
+				aExclure.addElement("");
+				lignesCommentaire = new Vector<Integer>();
+				lignesCommentaire.addElement(0);
+				lignesCommentaire.addElement(0);
+				listeQuestionnaires = new TreeMap<String, String>();
+				commentaire = "";
+				suivantQuestionnaire(0);
 			}
 		});
 		splitPane.setRightComponent(btnCommencer);
@@ -116,41 +127,84 @@ public class Fenetres {
 		
 	}
 	
-	private void activeQuestionnaire(ArrayList<ArrayList<String>> nomQuestionnaire, int numLigne, int initialisation){
-		String commentaire = "";
-		String premier_element = nomQuestionnaire.get(numLigne).get(0);;
-		if(!FormCreationHelper.fincode(nomQuestionnaire.get(numLigne))){
-			//Initialisation du commentaire
-			if ((numLigne > initialisation) & (commentaire.length() > 0)){
-				commentaire = "";
-			}
-			System.out.println(premier_element);
+	private void suivantQuestionnaire(int numLigne){
+		System.out.println(numLigne);
+		String premier_element = questionnaire.get(numLigne).get(0);
+		if(numLigne >= lignesCommentaire.lastElement()){
+			commentaire = "";
+		}
+		if(!FormCreationHelper.fincode(questionnaire.get(numLigne))){
+			//Si la ligne est a exclure
+			if(premier_element.contains(aExclure.firstElement()) & !aExclure.firstElement().equals("")){
+				int ligneSuivante = numLigne;
+				while(!questionnaire.get(ligneSuivante).get(0).contains(aExclure.lastElement())){
+					ligneSuivante++;
+				}
+				aExclure.set(0, "");
+				aExclure.set(1, "");
+				suivantQuestionnaire(ligneSuivante + 1);
 			//Si il a possibilite d'ajouter plusieurs reponses
-			if(premier_element.endsWith("++1")){
-				questionAjout(nomQuestionnaire, numLigne, commentaire);
+			}else if(premier_element.endsWith("++1")){
+				questionAjout(numLigne);
 			//Il y a une page dediee et on ignore
 			}else if(premier_element.endsWith("[PAGE]")){
-				activeQuestionnaire(nomQuestionnaire, numLigne + 1, 0);
+				suivantQuestionnaire(numLigne + 1);
 			//La ligne est un commentaire a garder en debut de question
 			} else if((premier_element.indexOf("...") >= 0) | (premier_element.indexOf("…") >= 0)) {
 				//On cherche le nombre de lignes sur lesquelles le commentaire est effectif
 				int index_par = premier_element.indexOf("(");
 				commentaire = premier_element.substring(0, index_par);
-				int nb_lignes = Character.getNumericValue(premier_element.charAt(index_par + 1));
-				activeQuestionnaire(nomQuestionnaire, numLigne + 1, numLigne + nb_lignes);
+				lignesCommentaire.set(0, numLigne);
+				lignesCommentaire.set(1, numLigne + Character.getNumericValue(premier_element.charAt(index_par + 1)));
+				suivantQuestionnaire(numLigne + 1);
 			//Si la ligne est une question
 			} else if((premier_element.indexOf(":") >= 0) | (premier_element.indexOf("?") >= 0)){
-				questionSimple(nomQuestionnaire, numLigne, commentaire);
+				questionSimple(numLigne);
 			//La la ligne est ignoree
 			} else {
-				activeQuestionnaire(nomQuestionnaire, numLigne + 1, 0);
+				suivantQuestionnaire(numLigne + 1);
 			}
 		}		
 	}
 	
-	private void questionSimple(ArrayList<ArrayList<String>> nomQuestionnaire, int numLigne, String com){
-		String case3 = nomQuestionnaire.get(numLigne).get(3);
-		ArrayList<String> infosQuestion = nomQuestionnaire.get(numLigne);
+	private void precedentQuestionnaire(int numLigne){
+		String premier_element = questionnaire.get(numLigne).get(0);
+		if(numLigne != 0){
+			//Si la ligne est a exclure
+			if(premier_element.contains(aExclure.lastElement()) & !aExclure.lastElement().equals("")){
+				int lignePrecedente = numLigne;
+				while(!questionnaire.get(lignePrecedente).get(0).contains(aExclure.firstElement())){
+					lignePrecedente--;
+				}
+				suivantQuestionnaire(lignePrecedente - 1);
+			//Si il a possibilite d'ajouter plusieurs reponses
+			}else if(premier_element.endsWith("++1")){
+				//on est a la fin d'un bloc d'ajout. on doit remonter au debut
+				int lignePrecedente = numLigne-1;
+				while(!questionnaire.get(lignePrecedente).get(0).endsWith("++1")){
+					lignePrecedente--;
+				}
+				questionAjout(lignePrecedente);
+			//Il y a une page dediee et on ignore
+			}else if(premier_element.endsWith("[PAGE]")){
+				suivantQuestionnaire(numLigne - 1);
+			//La ligne est un commentaire a garder en debut de question
+			} else if((premier_element.indexOf("...") >= 0) | (premier_element.indexOf("…") >= 0)) {
+				//On ignore
+				suivantQuestionnaire(numLigne - 1);
+			//Si la ligne est une question
+			} else if((premier_element.indexOf(":") >= 0) | (premier_element.indexOf("?") >= 0)){
+				questionSimple(numLigne);
+			//La la ligne est ignoree
+			} else {
+				suivantQuestionnaire(numLigne - 1);
+			}
+		}		
+	}
+	
+	private void questionSimple(int numLigne){
+		String case3 = questionnaire.get(numLigne).get(3);
+		ArrayList<String> infosQuestion = questionnaire.get(numLigne);
 		
 		JFrame question;
 		question = new JFrame();
@@ -158,7 +212,7 @@ public class Fenetres {
 		question.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		question.setVisible(true);
 		
-		JLabel lblQuestion = new JLabel(com + " " + FormCreationHelper.retireMarqueurs(infosQuestion.get(0)));
+		JLabel lblQuestion = new JLabel("<html>" + commentaire + " " + FormCreationHelper.retireMarqueurs(infosQuestion.get(0)) + "</html>");
 		lblQuestion.setFont(new Font("Trebuchet MS", Font.PLAIN, 20));
 		lblQuestion.setHorizontalAlignment(SwingConstants.CENTER);
 		question.add(lblQuestion, BorderLayout.NORTH);
@@ -178,24 +232,7 @@ public class Fenetres {
 			public void actionPerformed(ActionEvent arg0) {
 				//On ouvre une nouvelle fenetre et on ferme la fenetre courante
 				question.dispose();
-				//Si la question precedente est une question avec ajouts
-				if(nomQuestionnaire.get(numLigne-1).get(0).endsWith("++1")){
-					//On cherche le debut du bloc et on recommence
-					int ligne_a_reprendre = numLigne-2;
-					while(! nomQuestionnaire.get(ligne_a_reprendre).get(0).endsWith("++1")){
-						ligne_a_reprendre -= 1;
-					}
-					String commentaire = "";
-					String premier_element = nomQuestionnaire.get(ligne_a_reprendre - 1).get(0);
-					//Si la ligne precedente est un commentaire a reprendre
-					if((premier_element.indexOf("...") >= 0) | (premier_element.indexOf("…") >= 0)) {
-						commentaire = premier_element;
-					}
-					questionAjout(nomQuestionnaire, numLigne, commentaire);
-				//Sinon, on revient a la question precedente
-				} else {
-					activeQuestionnaire(nomQuestionnaire, numLigne - 1, 0);
-				}
+				precedentQuestionnaire(numLigne - 1);
 			}
 		});
 		splitPane.setLeftComponent(btnPrecedent);
@@ -232,7 +269,7 @@ public class Fenetres {
 					reponse.put(numLigne, v_choix);
 					//On ouvre une nouvelle fenetre et on ferme la fenetre courante
 					question.dispose();
-					activeQuestionnaire(nomQuestionnaire, numLigne + 1, 0);
+					suivantQuestionnaire(numLigne + 1);
 					
 				}
 			});
@@ -257,9 +294,23 @@ public class Fenetres {
 					//Chercher et enregistrer la reponse
 					String choix = cbReponse.getSelectedItem().toString();
 					//Si le choix initial a un marqueur, on le recupere
-					String choix_complet = infosQuestion.get(cbReponse.getSelectedIndex());
+					String choix_complet = infosQuestion.get(cbReponse.getSelectedIndex() + 3);
 					if(choix_complet.indexOf("*") >= 0){
-						listeQuestionnaires.addElement(choix_complet.substring(choix_complet.indexOf("*")+1));
+						String marqueur = choix_complet.substring(choix_complet.indexOf("("));
+						int i_marqueur2 = marqueur.substring(1).indexOf("(");
+						//Si une parenthese, c'est un marqueur de questionnaire
+						if(i_marqueur2 == -1){
+							String nom = "";
+							if(infosQuestion.get(2).length() > 0){
+								int ligne = Character.getNumericValue(infosQuestion.get(2).charAt(0));
+								nom = reponse.get(numLigne-ligne).lastElement();
+							}
+							listeQuestionnaires.put(choix_complet.substring(choix_complet.indexOf("*")+1), nom);
+						//Si deux parenthese, c'est un marqueur d'exclusion de questions
+						} else {
+							aExclure.set(0, marqueur.substring(0, i_marqueur2));
+							aExclure.set(1, marqueur.substring(i_marqueur2));
+						}
 					}
 					//Si "autre" est choisi, on demande le nom
 					if(choix.equals("autre")){
@@ -273,7 +324,7 @@ public class Fenetres {
 					reponse.put(numLigne, v_choix);
 					//On ouvre une nouvelle fenetre et on ferme la fenetre courante
 					question.dispose();
-					activeQuestionnaire(nomQuestionnaire, numLigne + 1, 0);
+					suivantQuestionnaire(numLigne + 1);
 					
 				}
 			});
@@ -281,8 +332,8 @@ public class Fenetres {
 		
 	}
 	
-	private void questionAjout(ArrayList<ArrayList<String>> nomQuestionnaire, int numLigne, String com){
-		ArrayList<String> infosQuestion = nomQuestionnaire.get(numLigne);
+	private void questionAjout(int numLigne){
+		ArrayList<String> infosQuestion = questionnaire.get(numLigne);
 		Vector<String> v_choix = new Vector<String>();
 		
 		JFrame question;
@@ -291,7 +342,7 @@ public class Fenetres {
 		question.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		question.setVisible(true);
 		
-		JLabel lblQuestion = new JLabel(com + " " + FormCreationHelper.retireMarqueurs(infosQuestion.get(0)));
+		JLabel lblQuestion = new JLabel(commentaire + " " + FormCreationHelper.retireMarqueurs(infosQuestion.get(0)));
 		lblQuestion.setFont(new Font("Trebuchet MS", Font.PLAIN, 20));
 		lblQuestion.setHorizontalAlignment(SwingConstants.CENTER);
 		question.add(lblQuestion, BorderLayout.NORTH);
@@ -358,7 +409,7 @@ public class Fenetres {
 				reponse.put(numLigne, v_choix);
 				//On ouvre une nouvelle fenetre et on ferme la fenetre courante
 				question.dispose();
-				questionsRepetees(nomQuestionnaire, numLigne+1, com, numLigne+1, 0, new Vector<String>(), v_choix);
+				questionsRepetees(numLigne+1, numLigne+1, 0, new Vector<String>(), v_choix);
 				
 			}
 		});
@@ -370,18 +421,16 @@ public class Fenetres {
 			public void actionPerformed(ActionEvent arg0) {
 				//On ouvre une nouvelle fenetre et on ferme la fenetre courante
 				question.dispose();
-				activeQuestionnaire(nomQuestionnaire, numLigne - 1, 0);
-				
+				precedentQuestionnaire(numLigne - 1);
 			}
 		});
 		splitPane.setLeftComponent(btnPrecedent);
 		
 	}
 	
-	private void questionsRepetees(ArrayList<ArrayList<String>> nomQuestionnaire, int numLigne, String commentaire,
-			int ligneDebut, int id_nom_courant, Vector<String> v_choix, Vector<String> v_noms){
-		String case3 = nomQuestionnaire.get(numLigne).get(3);
-		ArrayList<String> infosQuestion = nomQuestionnaire.get(numLigne);
+	private void questionsRepetees(int numLigne, int ligneDebut, int id_nom_courant, Vector<String> v_choix, Vector<String> v_noms){
+		String case3 = questionnaire.get(numLigne).get(3);
+		ArrayList<String> infosQuestion = questionnaire.get(numLigne);
 		
 		JFrame question;
 		question = new JFrame();
@@ -389,7 +438,7 @@ public class Fenetres {
 		question.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		question.setVisible(true);
 		
-		JLabel lblQuestion = new JLabel("Pour " + v_noms.get(id_nom_courant) + ", " + FormCreationHelper.retireMarqueurs(infosQuestion.get(0)));
+		JLabel lblQuestion = new JLabel("<html>Pour " + v_noms.get(id_nom_courant) + ", " + FormCreationHelper.retireMarqueurs(infosQuestion.get(0)) + "</html>");
 		lblQuestion.setFont(new Font("Trebuchet MS", Font.PLAIN, 20));
 		lblQuestion.setHorizontalAlignment(SwingConstants.CENTER);
 		question.add(lblQuestion, BorderLayout.NORTH);
@@ -412,19 +461,19 @@ public class Fenetres {
 				//Si on est a la premiere ligne
 				if(numLigne == ligneDebut){
 					//On revient a l'ajout de noms
-					questionAjout(nomQuestionnaire, numLigne - 1, commentaire);
+					questionAjout(numLigne - 1);
 				//Si on est au premier nom de la liste
 				} else if(id_nom_courant == 0) {
 					int nouvel_id = v_noms.size()-1;
 					Vector<String> nouveau_v_choix = reponse.get(numLigne-1);
 					//On retire le dernier element du vecteur
 					nouveau_v_choix.remove(nouveau_v_choix.size() - 1);
-					questionsRepetees(nomQuestionnaire, numLigne-1, commentaire, ligneDebut, nouvel_id, nouveau_v_choix, v_noms);
+					questionsRepetees(numLigne-1, ligneDebut, nouvel_id, nouveau_v_choix, v_noms);
 				//Sinon
 				} else {
 					Vector<String> nouveau_v_choix = v_choix;
 					nouveau_v_choix.remove(nouveau_v_choix.size() - 1);
-					questionsRepetees(nomQuestionnaire, numLigne, commentaire, ligneDebut, id_nom_courant-1, nouveau_v_choix, v_noms);
+					questionsRepetees(numLigne, ligneDebut, id_nom_courant-1, nouveau_v_choix, v_noms);
 				}
 				
 			}
@@ -468,14 +517,14 @@ public class Fenetres {
 						//Si on est a la derniere question a poser plusieurs fois
 						if(infosQuestion.get(0).endsWith("++1")){
 							//On passe a la prochaine question
-							activeQuestionnaire(nomQuestionnaire, numLigne + 1, 0);
+							suivantQuestionnaire(numLigne + 1);
 						} else {
 							//On passe a la prochaine question
-							questionsRepetees(nomQuestionnaire, numLigne + 1, commentaire, ligneDebut, 0, new Vector<String> (), v_noms);
+							questionsRepetees(numLigne + 1, ligneDebut, 0, new Vector<String> (), v_noms);
 						}
 					//On incremente le nom courant
 					} else {
-						questionsRepetees(nomQuestionnaire, numLigne, commentaire, ligneDebut, id_nom_courant + 1, v_choix, v_noms);
+						questionsRepetees(numLigne, ligneDebut, id_nom_courant + 1, v_choix, v_noms);
 					}
 				}
 			});
@@ -503,7 +552,22 @@ public class Fenetres {
 					//Si le choix initial a un marqueur, on le recupere
 					String choix_complet = infosQuestion.get(cbReponse.getSelectedIndex());
 					if(choix_complet.indexOf("*") >= 0){
-						listeQuestionnaires.addElement(choix_complet.substring(choix_complet.indexOf("*")+1));
+						String marqueur = choix_complet.substring(choix_complet.indexOf("("));
+						int i_marqueur2 = marqueur.substring(1).indexOf("(");
+						//Si une parenthese, c'est un marqueur de questionnaire
+						if(i_marqueur2 == -1){
+							String nom = "";
+							if(infosQuestion.get(2).length() > 0){
+								int ligne = Character.getNumericValue(infosQuestion.get(2).charAt(0));
+								nom = reponse.get(numLigne-ligne).lastElement();
+							}
+							listeQuestionnaires.put(choix_complet.substring(choix_complet.indexOf("*")+1), nom);
+						//Si deux parenthese, c'est un marqueur d'exclusion de questions
+						} else {
+							aExclure.set(0, marqueur.substring(0, i_marqueur2));
+							aExclure.set(1, marqueur.substring(i_marqueur2));
+							System.out.println(aExclure.toString());
+						}
 					}
 					//on ferme la fenetre courante
 					question.dispose();
@@ -514,14 +578,14 @@ public class Fenetres {
 						//Si on est a la derniere question a poser plusieurs fois
 						if(infosQuestion.get(0).endsWith("++1")){
 							//On passe a la prochaine question
-							activeQuestionnaire(nomQuestionnaire, numLigne + 1, 0);
+							suivantQuestionnaire(numLigne + 1);
 						} else {
 							//On passe a la prochaine question
-							questionsRepetees(nomQuestionnaire, numLigne + 1, commentaire, ligneDebut, 0, new Vector<String> (), v_noms);
+							questionsRepetees(numLigne + 1, ligneDebut, 0, new Vector<String> (), v_noms);
 						}
 					//On incremente le nom courant
 					} else {
-						questionsRepetees(nomQuestionnaire, numLigne, commentaire, ligneDebut, id_nom_courant + 1, v_choix, v_noms);
+						questionsRepetees(numLigne, ligneDebut, id_nom_courant + 1, v_choix, v_noms);
 					}
 					
 				}

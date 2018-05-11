@@ -13,19 +13,17 @@ public class CSVParser {
 		    String line = "";
 		    try {
 		      BufferedReader br = new BufferedReader(new FileReader(filename));
+		      int i = 0;
 		      while ((line = br.readLine()) != null){
+		    	  i++;
 		    	ArrayList<String> dataAsString = new ArrayList<String>(Arrays.asList(line.split("\\|")));
 		    	if(FormCreationHelper.isaquestion(dataAsString) ||
 		    			FormCreationHelper.isatitle(dataAsString) ||
 		    			!FormCreationHelper.hasmarqueur(dataAsString).equals("") ||
-		    			FormCreationHelper.isquestiontoaskmanytimes(dataAsString)){
-		    		/**
-		    		for(int i = 0; i < dataAsString.size(); i++){
-		    			String string = dataAsString.get(i);
-			    		byte[] b = string.getBytes("UTF-16");
-			    		dataAsString.set(i, new String(b, "UTF-8"));
-		    		}
-		    		*/
+		    			FormCreationHelper.isquestiontoaskmanytimes(dataAsString) ||
+		    			FormCreationHelper.isanend(dataAsString) ||
+		    			FormCreationHelper.isafiletoopen(dataAsString) ||
+		    			FormCreationHelper.fincode(dataAsString)){
 		    		data.add(dataAsString);
 		    		
 		    	}
