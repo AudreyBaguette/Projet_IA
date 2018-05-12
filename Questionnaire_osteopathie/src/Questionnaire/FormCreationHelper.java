@@ -100,6 +100,23 @@ public class FormCreationHelper {
 					res = true ;
 				}
 			}
+			else if(atester.indexOf("*") >-1) {
+				int i = atester.indexOf("*");
+				i--;
+				if(atester.charAt(i)== ']') {
+					String compare = "[TEXTE]";
+					boolean difference = false;
+					while( i>=0 && !difference) {
+						if(atester.charAt(i)!=compare.charAt(i)) {
+							difference = true;
+						}
+						i--;
+					}
+					if(!difference) {
+						res = true ;
+					}
+				}
+			}
 		}
 		
 		return res;
@@ -107,7 +124,7 @@ public class FormCreationHelper {
 	
 	public static int titremultipages(ArrayList<String> a) { //retour -1 si ce n'est pas un titre multi page, le nombre de question si ça l'est
 		int res =-1;
-		if(a.size()>0) {
+		if(a.size()>0 && a.get(0).length()>0) {
 			String atester = a.get(0);
 			atester = atester.trim();
 		
@@ -116,7 +133,7 @@ public class FormCreationHelper {
 				boolean fin = false;
 				boolean pasnombre = false;
 				for(int i = atester.length()-1; i>=0 && !fin && !pasnombre ;i--) {
-					if(atester.charAt(i)==')') {
+					if(atester.charAt(i)=='(') {
 						fin = true;
 					}
 					else if(Character.isDigit(atester.charAt(i))){
@@ -210,7 +227,10 @@ public class FormCreationHelper {
 	
 	public static boolean hastoanswerquestion(ArrayList<String> marqueurs , ArrayList<String> a) {
 		boolean res = true;
+		System.out.println("dans hastoanswer");
 		ArrayList<String> marqueursquestion = hasmarqueur(a);
+		System.out.println(marqueurs.toString());
+		System.out.println(marqueursquestion.toString());
 		for(int i = 0; i<marqueursquestion.size() && res; i++) {
 			boolean trouve=false;;
 			for(int j=0; j<marqueurs.size(); j++) {

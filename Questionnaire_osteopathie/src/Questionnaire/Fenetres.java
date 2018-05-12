@@ -35,6 +35,8 @@ public class Fenetres {
 	private TreeMap<String, String> listeQuestionnaires;
 	private Vector<String> aExclure;
 	private Vector<Integer> lignesCommentaire;
+	private int nbpagestitre =0;
+	private String titremultipage = "";
 	private String commentaire;
 	private ArrayList<String> marqueurs = new ArrayList<String>();
 	private ArrayList<String> questionairesfinals = new ArrayList<String>() ;
@@ -131,13 +133,13 @@ public class Fenetres {
 	}
 	
 	private void suivantQuestionnaire(int numLigne){
-		System.out.println(numLigne);
 		if(questionnaire.get(numLigne).size() >0 ) {
 			String premier_element = questionnaire.get(numLigne).get(0);
 			ArrayList<String> ligne = questionnaire.get(numLigne);
 			/*if(numLigne >= lignesCommentaire.lastElement()){
 				commentaire = "";
 			}*/
+			System.out.println(numLigne + " : " +premier_element);
 			if(!FormCreationHelper.fincode(questionnaire.get(numLigne))){ // si c'est la fin du code
 				//Si la ligne est a exclure
 				/*if(premier_element.contains(aExclure.firstElement()) & !aExclure.firstElement().equals("")){
@@ -149,23 +151,47 @@ public class Fenetres {
 					aExclure.set(1, "");
 					suivantQuestionnaire(ligneSuivante + 1);*/
 				//Si il a possibilite d'ajouter plusieurs reponses
-			
+				nbpagestitre --;
+				if(nbpagestitre <1) {
+					titremultipage ="";
+				}
+				if(premier_element.trim().length()<=0) {
+					suivantQuestionnaire(numLigne + 1);
+				}
+				//si c'est un titre multipage
+				if(FormCreationHelper.titremultipages(ligne)!= -1) {
+					titremultipage = FormCreationHelper.retireMarqueurs(premier_element);
+					nbpagestitre = FormCreationHelper.titremultipages(ligne);
+					suivantQuestionnaire(numLigne + 1);
+				}
 				//si la ligne contient une question
 				if(FormCreationHelper.isaquestion(ligne)) {
 					if(FormCreationHelper.hastoanswerquestion(marqueurs, ligne)) {
-						questionSimple(numLigne);
+						if(FormCreationHelper.isquestiontoaskmanytimes(ligne)){
+							System.out.println("dans suivantequestion : " +premier_element);
+							questionAjout(numLigne);
+						}
+						else {
+							questionSimple(numLigne);
+						}
+						
 					}
 					else {
 						suivantQuestionnaire(numLigne + 1);
 					}
 					//Si il a possibilite d'ajouter plusieurs reponses
-				}else if(premier_element.endsWith("++1")){
-					questionAjout(numLigne);
+				}else if(FormCreationHelper.isquestiontoaskmanytimes(ligne)){
+					if(FormCreationHelper.hastoanswerquestion(marqueurs, ligne)) {
+						questionAjout(numLigne);
+					}
+					else {
+						suivantQuestionnaire(numLigne + 2);
+					}
 					//Il y a une page dediee et on ignore
 				}else if(premier_element.endsWith("[PAGE]")){   //@TODO 
 					suivantQuestionnaire(numLigne + 1);
 					//La ligne est un commentaire a garder en debut de question
-				} else if((premier_element.indexOf("...") >= 0) | (premier_element.indexOf("…") >= 0)) {
+				} /*else if((premier_element.indexOf("...") >= 0) | (premier_element.indexOf("…") >= 0)) {
 					//On cherche le nombre de lignes sur lesquelles le commentaire est effectif
 					int index_par = premier_element.indexOf("(");
 					commentaire = premier_element.substring(0, index_par);
@@ -173,7 +199,7 @@ public class Fenetres {
 					lignesCommentaire.set(1, numLigne + Character.getNumericValue(premier_element.charAt(index_par + 1)));
 					suivantQuestionnaire(numLigne + 1);
 					//Si la ligne est une question
-				} else {
+				} */else {
 					suivantQuestionnaire(numLigne + 1);
 				}
 			}
@@ -231,7 +257,7 @@ public class Fenetres {
 		question.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		question.setVisible(true);
 		
-		JLabel lblQuestion = new JLabel("<html>" + commentaire + " " + FormCreationHelper.retireMarqueurs(infosQuestion.get(0)) + "</html>");
+		JLabel lblQuestion = new JLabel("<html>" + titremultipage + " " + FormCreationHelper.retireMarqueurs(infosQuestion.get(0)) + "</html>");
 		lblQuestion.setFont(new Font("Trebuchet MS", Font.PLAIN, 20));
 		lblQuestion.setHorizontalAlignment(SwingConstants.CENTER);
 		question.add(lblQuestion, BorderLayout.NORTH);
@@ -257,7 +283,7 @@ public class Fenetres {
 		splitPane.setLeftComponent(btnPrecedent);
 		
 		//Il s'agit d'une question a entree
-		if(case3.equals("[TEXTE]")){
+		if(FormCreationHelper.tocomplite(questionnaire.get(numLigne))){
 			JTextField jtfReponse = new JTextField();
 			jtfReponse.getDocument().addDocumentListener(new DocumentListener() {
 				public void changedUpdate(DocumentEvent e) {
@@ -398,6 +424,8 @@ public class Fenetres {
 	private void questionAjout(int numLigne){
 		ArrayList<String> infosQuestion = questionnaire.get(numLigne);
 		Vector<String> v_choix = new Vector<String>();
+		System.out.println("dans question ajout");
+		System.out.println("question : " + infosQuestion.get(0));
 		
 		JFrame question;
 		question = new JFrame();
@@ -405,7 +433,7 @@ public class Fenetres {
 		question.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		question.setVisible(true);
 		
-		JLabel lblQuestion = new JLabel(commentaire + " " + FormCreationHelper.retireMarqueurs(infosQuestion.get(0)));
+		JLabel lblQuestion = new JLabel(titremultipage + " " + FormCreationHelper.retireMarqueurs(infosQuestion.get(0)));
 		lblQuestion.setFont(new Font("Trebuchet MS", Font.PLAIN, 20));
 		lblQuestion.setHorizontalAlignment(SwingConstants.CENTER);
 		question.add(lblQuestion, BorderLayout.NORTH);
@@ -472,7 +500,7 @@ public class Fenetres {
 				reponse.put(numLigne, v_choix);
 				//On ouvre une nouvelle fenetre et on ferme la fenetre courante
 				question.dispose();
-				questionsRepetees(numLigne+1, numLigne+1, 0, new Vector<String>(), v_choix);
+				questionsRepetees(numLigne+1, numLigne+1 , 0, new Vector<String>(), v_choix);
 				
 			}
 		});
@@ -494,6 +522,7 @@ public class Fenetres {
 	private void questionsRepetees(int numLigne, int ligneDebut, int id_nom_courant, Vector<String> v_choix, Vector<String> v_noms){
 		String case3 = questionnaire.get(numLigne).get(3);
 		ArrayList<String> infosQuestion = questionnaire.get(numLigne);
+		System.out.println("Dans questionrepetes "+ infosQuestion.get(0));
 		
 		JFrame question;
 		question = new JFrame();
@@ -544,7 +573,7 @@ public class Fenetres {
 		splitPane.setLeftComponent(btnPrecedent);
 		
 		//Il s'agit d'une question a entree
-		if(case3.equals("[TEXTE]")){
+		if(FormCreationHelper.tocomplite(infosQuestion)){
 			JTextField jtfReponse = new JTextField();
 			jtfReponse.getDocument().addDocumentListener(new DocumentListener() {
 				public void changedUpdate(DocumentEvent e) {
@@ -568,6 +597,7 @@ public class Fenetres {
 			btnSuivant.setEnabled(false);
 			btnSuivant.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent arg0) {
+					System.out.println("Boutonsuivant de question multiple");
 					//Chercher et enregistrer la reponse
 					String choix = jtfReponse.getText();
 					v_choix.addElement(choix);
@@ -575,15 +605,20 @@ public class Fenetres {
 					question.dispose();
 					//Si on est au dernier nom de la liste
 					if(id_nom_courant == v_noms.size() - 1){
+						System.out.println("C'est le dernier prenom de la liste");
 						//On enregistre le vecteur de reponses
 						reponse.put(numLigne, v_choix);
 						//Si on est a la derniere question a poser plusieurs fois
-						if(infosQuestion.get(0).endsWith("++1")){
+						System.out.println("dans multiple question, question suivante : " +questionnaire.get(numLigne + 1).get(0) );
+						if(!FormCreationHelper.isquestiontoaskmanytimes(questionnaire.get(numLigne + 1))){
 							//On passe a la prochaine question
+							System.out.println("la question suivante est normale");
 							suivantQuestionnaire(numLigne + 1);
 						} else {
 							//On passe a la prochaine question
-							questionsRepetees(numLigne + 1, ligneDebut, 0, new Vector<String> (), v_noms);
+							System.out.println("la question suivante est multiple");
+							questionsRepetees(numLigne + 1, numLigne + 1, 0, new Vector<String> (), v_noms);
+							
 						}
 					//On incremente le nom courant
 					} else {
@@ -614,7 +649,7 @@ public class Fenetres {
 					v_choix.addElement(choix);
 					//Si le choix initial a un marqueur, on le recupere
 					String choix_complet = infosQuestion.get(cbReponse.getSelectedIndex());
-					if(choix_complet.indexOf("*") >= 0){
+					/*if(choix_complet.indexOf("*") >= 0){
 						String marqueur = choix_complet.substring(choix_complet.indexOf("("));
 						int i_marqueur2 = marqueur.substring(1).indexOf("(");
 						//Si une parenthese, c'est un marqueur de questionnaire
@@ -631,6 +666,44 @@ public class Fenetres {
 							aExclure.set(1, marqueur.substring(i_marqueur2));
 							System.out.println(aExclure.toString());
 						}
+					}*/
+					if(choix_complet.indexOf("*")>=0) {
+						int i = choix_complet.indexOf("*");
+						if(choix_complet.charAt(i+1)=='(') {
+							i=i+2;
+							String questionnaire ="";
+							while(i<choix_complet.length() && choix_complet.charAt(i)!=')') {
+								questionnaire = questionnaire + choix_complet.charAt(i);
+								i++;
+							}
+							if(choix_complet.charAt(i)==')') {
+								questionairesfinals.add(questionnaire);
+							}
+						}
+						if(i<choix_complet.length()-1 && choix_complet.charAt(i+1)=='(') {
+							i=i+2;
+							String marqueur = "";
+							while(i<choix_complet.length() && choix_complet.charAt(i)!=')') {
+								marqueur = marqueur + choix_complet.charAt(i);
+								i++;
+							}
+							if(choix_complet.charAt(i)==')') {
+								marqueurs.add(marqueur);
+							}
+						}
+					}
+					else if(choix_complet.indexOf("(") >= 0){
+						int i = choix_complet.indexOf("(");
+						i++;
+						String marqueur = "";
+						while(i<choix_complet.length() && choix_complet.charAt(i)!=')') {
+							marqueur = marqueur + choix_complet.charAt(i);
+							i++;
+						}
+						if(choix_complet.charAt(i)==')') {
+							marqueurs.add(marqueur);
+						}
+						
 					}
 					//on ferme la fenetre courante
 					question.dispose();
@@ -639,12 +712,12 @@ public class Fenetres {
 						//On enregistre le vecteur de reponses
 						reponse.put(numLigne, v_choix);
 						//Si on est a la derniere question a poser plusieurs fois
-						if(infosQuestion.get(0).endsWith("++1")){
+						if(!FormCreationHelper.isquestiontoaskmanytimes(questionnaire.get(numLigne + 1))){
 							//On passe a la prochaine question
 							suivantQuestionnaire(numLigne + 1);
 						} else {
 							//On passe a la prochaine question
-							questionsRepetees(numLigne + 1, ligneDebut, 0, new Vector<String> (), v_noms);
+							questionsRepetees(numLigne + 1, numLigne+1, 0, new Vector<String> (), v_noms);
 						}
 					//On incremente le nom courant
 					} else {
