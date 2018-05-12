@@ -14,6 +14,24 @@ public class FormCreationHelper {
 				if(atester.charAt(atester.length()-1)== '?'|| atester.charAt(atester.length()-1)== ':') {
 					res = true;
 				}
+				else if(atester.charAt(atester.length()-1)==')') {
+					int i = atester.length()-1 ;
+					while( i<atester.length() && atester.charAt(i)==')'  ) {
+						while(i<atester.length() && atester.charAt(i)!='(' ) {
+						i++;
+						}
+						i++;
+					}
+					if(i<atester.length() && (atester.charAt(i)== '?'|| atester.charAt(i)== ':')){
+						res = true;
+					}
+						
+				}
+				else if(atester.length()>3 && atester.charAt(atester.length()-1)=='+' && atester.charAt(atester.length()-2)=='+' && atester.charAt(atester.length()-3)=='1') {
+					if(atester.charAt(atester.length()-4)== '?'|| atester.charAt(atester.length()-4)== ':') {
+						res =true;
+					}
+				}
 			}
 		}
 		return res;
@@ -57,7 +75,7 @@ public class FormCreationHelper {
 		
 			if(atester.length()>=3) {
 				if(atester.startsWith("fin")) {
-					res = true; //... en un char ?
+					res = true;
 				}
 			}
 		}
@@ -160,29 +178,49 @@ public class FormCreationHelper {
 		return res;
 	}
 	
-	public static String hasmarqueur(ArrayList<String> a) { //renvoie chaine vide si pas de marqueur, renvoie marqueur sinon
-		String res = "";
+	public static ArrayList<String> hasmarqueur(ArrayList<String> a) { //renvoie chaine vide si pas de marqueur, renvoie marqueur sinon
+		ArrayList<String> res = new ArrayList<String>();
 		if(a.size()>0) {
 			if(a.get(0).length() > 0){
 				String atester = a.get(0);
 				atester= atester.trim();
-				
-				if(atester.charAt(0)=='(') {
+				int i =0;
+				while(i<atester.length() && atester.charAt(i)=='(') {
+					i++;
+					String s= "";
 					boolean fini = false;
-					for(int i=1;i<atester.length() && !fini;i++) {
+					while(i<atester.length() && !fini) {
 						if(atester.charAt(i)==')') {
 							fini = true;
 						}
 						else {
-							res = res+atester.charAt(i);
+							s=s+atester.charAt(i);
 						}
+						i++;
 					}
-					if(!fini) {
-						res ="";
+					if(fini) {
+						res.add(s);
 					}
 				}
 			}
 		
+		}
+		return res;
+	}
+	
+	public static boolean hastoanswerquestion(ArrayList<String> marqueurs , ArrayList<String> a) {
+		boolean res = true;
+		ArrayList<String> marqueursquestion = hasmarqueur(a);
+		for(int i = 0; i<marqueursquestion.size() && res; i++) {
+			boolean trouve=false;;
+			for(int j=0; j<marqueurs.size(); j++) {
+				if(marqueursquestion.get(i).equals(marqueurs.get(j))) {
+					trouve =true;
+				}
+			}
+			if(!trouve) {
+				res = false;
+			}
 		}
 		return res;
 	}

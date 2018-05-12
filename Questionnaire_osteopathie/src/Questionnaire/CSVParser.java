@@ -17,21 +17,13 @@ public class CSVParser {
 		      while ((line = br.readLine()) != null){
 		    	  i++;
 		    	ArrayList<String> dataAsString = new ArrayList<String>(Arrays.asList(line.split("\\|")));
-		    	if(FormCreationHelper.isaquestion(dataAsString) ||
-		    			FormCreationHelper.isatitle(dataAsString) ||
-		    			!FormCreationHelper.hasmarqueur(dataAsString).equals("") ||
-		    			FormCreationHelper.isquestiontoaskmanytimes(dataAsString) ||
-		    			FormCreationHelper.isanend(dataAsString) ||
-		    			FormCreationHelper.isafiletoopen(dataAsString) ||
-		    			FormCreationHelper.fincode(dataAsString)){
-		    		data.add(dataAsString);
-		    		
-		    	}
+		    	data.add(dataAsString);
 		      }
 		      br.close();
 		    }catch(IOException e) {
 		    	e.printStackTrace();
 		    }
 		    return data;
-		  }
+	}
 }
+

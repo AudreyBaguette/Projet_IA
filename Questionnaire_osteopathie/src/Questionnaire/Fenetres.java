@@ -36,6 +36,8 @@ public class Fenetres {
 	private Vector<String> aExclure;
 	private Vector<Integer> lignesCommentaire;
 	private String commentaire;
+	private ArrayList<String> marqueurs = new ArrayList<String>();
+	private ArrayList<String> questionairesfinals = new ArrayList<String>() ;
 
 	/**
 	 * Launch the application.
@@ -110,7 +112,7 @@ public class Fenetres {
 					  File fichierQuestionnaire = fileChooser.getSelectedFile();
 					  if(fichierQuestionnaire.getName().endsWith("csv")){
 						  questionnaire = CSVParser.importCSV(fichierQuestionnaire.getPath());
-						  lblMessageintro.setText("Fichier chargé : " + fichierQuestionnaire.getName());
+						  lblMessageintro.setText("Fichier charg� : " + fichierQuestionnaire.getName());
 						  btnCommencer.setEnabled(true);
 					  } else {
 						  lblMessageintro.setText("Le fichier " + fichierQuestionnaire.getName() + " n'a pas le bon format.");
@@ -119,6 +121,7 @@ public class Fenetres {
 					}
 				} catch(Exception exChargerFichier){
 					lblMessageintro.setText("Fichier invalide");
+					System.out.println(exChargerFichier.toString());
 				}
 			}
 		});
@@ -129,42 +132,58 @@ public class Fenetres {
 	
 	private void suivantQuestionnaire(int numLigne){
 		System.out.println(numLigne);
-		String premier_element = questionnaire.get(numLigne).get(0);
-		if(numLigne >= lignesCommentaire.lastElement()){
-			commentaire = "";
-		}
-		if(!FormCreationHelper.fincode(questionnaire.get(numLigne))){
-			//Si la ligne est a exclure
-			if(premier_element.contains(aExclure.firstElement()) & !aExclure.firstElement().equals("")){
-				int ligneSuivante = numLigne;
-				while(!questionnaire.get(ligneSuivante).get(0).contains(aExclure.lastElement())){
-					ligneSuivante++;
+		if(questionnaire.get(numLigne).size() >0 ) {
+			String premier_element = questionnaire.get(numLigne).get(0);
+			ArrayList<String> ligne = questionnaire.get(numLigne);
+			/*if(numLigne >= lignesCommentaire.lastElement()){
+				commentaire = "";
+			}*/
+			if(!FormCreationHelper.fincode(questionnaire.get(numLigne))){ // si c'est la fin du code
+				//Si la ligne est a exclure
+				/*if(premier_element.contains(aExclure.firstElement()) & !aExclure.firstElement().equals("")){
+					int ligneSuivante = numLigne;
+					while(!questionnaire.get(ligneSuivante).get(0).contains(aExclure.lastElement())){
+						ligneSuivante++;
+					}
+					aExclure.set(0, "");
+					aExclure.set(1, "");
+					suivantQuestionnaire(ligneSuivante + 1);*/
+				//Si il a possibilite d'ajouter plusieurs reponses
+			
+				//si la ligne contient une question
+				if(FormCreationHelper.isaquestion(ligne)) {
+					if(FormCreationHelper.hastoanswerquestion(marqueurs, ligne)) {
+						questionSimple(numLigne);
+					}
+					else {
+						suivantQuestionnaire(numLigne + 1);
+					}
+					//Si il a possibilite d'ajouter plusieurs reponses
+				}else if(premier_element.endsWith("++1")){
+					questionAjout(numLigne);
+					//Il y a une page dediee et on ignore
+				}else if(premier_element.endsWith("[PAGE]")){   //@TODO 
+					suivantQuestionnaire(numLigne + 1);
+					//La ligne est un commentaire a garder en debut de question
+				} else if((premier_element.indexOf("...") >= 0) | (premier_element.indexOf("…") >= 0)) {
+					//On cherche le nombre de lignes sur lesquelles le commentaire est effectif
+					int index_par = premier_element.indexOf("(");
+					commentaire = premier_element.substring(0, index_par);
+					lignesCommentaire.set(0, numLigne);
+					lignesCommentaire.set(1, numLigne + Character.getNumericValue(premier_element.charAt(index_par + 1)));
+					suivantQuestionnaire(numLigne + 1);
+					//Si la ligne est une question
+				} else {
+					suivantQuestionnaire(numLigne + 1);
 				}
-				aExclure.set(0, "");
-				aExclure.set(1, "");
-				suivantQuestionnaire(ligneSuivante + 1);
-			//Si il a possibilite d'ajouter plusieurs reponses
-			}else if(premier_element.endsWith("++1")){
-				questionAjout(numLigne);
-			//Il y a une page dediee et on ignore
-			}else if(premier_element.endsWith("[PAGE]")){
-				suivantQuestionnaire(numLigne + 1);
-			//La ligne est un commentaire a garder en debut de question
-			} else if((premier_element.indexOf("...") >= 0) | (premier_element.indexOf("…") >= 0)) {
-				//On cherche le nombre de lignes sur lesquelles le commentaire est effectif
-				int index_par = premier_element.indexOf("(");
-				commentaire = premier_element.substring(0, index_par);
-				lignesCommentaire.set(0, numLigne);
-				lignesCommentaire.set(1, numLigne + Character.getNumericValue(premier_element.charAt(index_par + 1)));
-				suivantQuestionnaire(numLigne + 1);
-			//Si la ligne est une question
-			} else if((premier_element.indexOf(":") >= 0) | (premier_element.indexOf("?") >= 0)){
-				questionSimple(numLigne);
-			//La la ligne est ignoree
-			} else {
-				suivantQuestionnaire(numLigne + 1);
 			}
-		}		
+			else {
+				//si c'est la fin du code
+			}
+		}
+		else {
+			suivantQuestionnaire(numLigne + 1);
+		}
 	}
 	
 	private void precedentQuestionnaire(int numLigne){
@@ -294,8 +313,8 @@ public class Fenetres {
 					//Chercher et enregistrer la reponse
 					String choix = cbReponse.getSelectedItem().toString();
 					//Si le choix initial a un marqueur, on le recupere
-					String choix_complet = infosQuestion.get(cbReponse.getSelectedIndex() + 3);
-					if(choix_complet.indexOf("*") >= 0){
+					String choix_complet = infosQuestion.get(cbReponse.getSelectedIndex() + 3).trim();
+					/*if(choix_complet.indexOf("*") >= 0){
 						String marqueur = choix_complet.substring(choix_complet.indexOf("("));
 						int i_marqueur2 = marqueur.substring(1).indexOf("(");
 						//Si une parenthese, c'est un marqueur de questionnaire
@@ -308,10 +327,54 @@ public class Fenetres {
 							listeQuestionnaires.put(choix_complet.substring(choix_complet.indexOf("*")+1), nom);
 						//Si deux parenthese, c'est un marqueur d'exclusion de questions
 						} else {
+							marqueurs.add(e)
 							aExclure.set(0, marqueur.substring(0, i_marqueur2));
 							aExclure.set(1, marqueur.substring(i_marqueur2));
 						}
+					}*/
+					if(choix_complet.indexOf("*") >= 0) {
+						
+						int i =choix_complet.indexOf("*");
+						System.out.println("il y a un questionnaire index * : "+ i);
+						if(choix_complet.charAt(i+1) =='(') {
+							System.out.println("une ( suit l'*");
+							i= i+2;
+							String questionaire = "";
+							while(i<choix_complet.length() && choix_complet.charAt(i)!=')') {
+								System.out.println("i : "+i+" char : "+choix_complet.charAt(i));
+								questionaire = questionaire + choix_complet.charAt(i);
+								i++;
+							}
+							if(choix_complet.charAt(i)==')') {
+								questionairesfinals.add(questionaire);
+							}
+						}
+						if(i<choix_complet.length()-1 && choix_complet.charAt(i+1)=='(') {
+							i=i+2;
+							String marqueur = "";
+							while(i<choix_complet.length() && choix_complet.charAt(i)!=')') {
+								marqueur = marqueur + choix_complet.charAt(i);
+								i++;
+							}
+							if(choix_complet.charAt(i)==')') {
+								marqueurs.add(marqueur);
+							}
+						}
 					}
+					else if(choix_complet.indexOf("(") >= 0){
+						int i = choix_complet.indexOf("(");
+						i++;
+						String marqueur = "";
+						while(i<choix_complet.length() && choix_complet.charAt(i)!=')') {
+							marqueur = marqueur + choix_complet.charAt(i);
+							i++;
+						}
+						if(choix_complet.charAt(i)==')') {
+							marqueurs.add(marqueur);
+						}
+						
+					}
+					
 					//Si "autre" est choisi, on demande le nom
 					if(choix.equals("autre")){
 						String autre_nom = JOptionPane.showInputDialog("Nom donne : ");
