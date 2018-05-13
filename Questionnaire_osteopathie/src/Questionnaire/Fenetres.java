@@ -14,7 +14,12 @@ import javax.swing.event.DocumentListener;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -24,6 +29,9 @@ import javax.swing.JSplitPane;
 import javax.swing.JTextField;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.Vector;
 
@@ -32,14 +40,12 @@ public class Fenetres {
 	private JFrame frame;
 	private ArrayList<ArrayList<String>> questionnaire;
 	private static TreeMap<Integer, Vector<String>> reponse;
-	private TreeMap<String, String> listeQuestionnaires;
 	private Vector<String> aExclure;
 	private Vector<Integer> lignesCommentaire;
 	private int nbpagestitre =0;
 	private String titremultipage = "";
-	private String commentaire;
 	private ArrayList<String> marqueurs = new ArrayList<String>();
-	private ArrayList<String> questionairesfinals = new ArrayList<String>() ;
+	private ArrayList<String> questionairesfinaux = new ArrayList<String>() ;
 
 	/**
 	 * Launch the application.
@@ -51,6 +57,7 @@ public class Fenetres {
 					reponse = new TreeMap<Integer, Vector<String>>();
 					Fenetres window = new Fenetres();
 					window.frame.setVisible(true);
+					window.sauvegarder();
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -90,15 +97,12 @@ public class Fenetres {
 		btnCommencer.setEnabled(false);
 		btnCommencer.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				System.out.println(questionnaire.toString());
 				aExclure = new Vector<String>();
 				aExclure.addElement("");
 				aExclure.addElement("");
 				lignesCommentaire = new Vector<Integer>();
 				lignesCommentaire.addElement(0);
 				lignesCommentaire.addElement(0);
-				listeQuestionnaires = new TreeMap<String, String>();
-				commentaire = "";
 				suivantQuestionnaire(0);
 			}
 		});
@@ -114,7 +118,7 @@ public class Fenetres {
 					  File fichierQuestionnaire = fileChooser.getSelectedFile();
 					  if(fichierQuestionnaire.getName().endsWith("csv")){
 						  questionnaire = CSVParser.importCSV(fichierQuestionnaire.getPath());
-						  lblMessageintro.setText("Fichier charg� : " + fichierQuestionnaire.getName());
+						  lblMessageintro.setText("Fichier chargé : " + fichierQuestionnaire.getName());
 						  btnCommencer.setEnabled(true);
 					  } else {
 						  lblMessageintro.setText("Le fichier " + fichierQuestionnaire.getName() + " n'a pas le bon format.");
@@ -123,7 +127,6 @@ public class Fenetres {
 					}
 				} catch(Exception exChargerFichier){
 					lblMessageintro.setText("Fichier invalide");
-					System.out.println(exChargerFichier.toString());
 				}
 			}
 		});
@@ -139,7 +142,6 @@ public class Fenetres {
 			/*if(numLigne >= lignesCommentaire.lastElement()){
 				commentaire = "";
 			}*/
-			System.out.println(numLigne + " : " +premier_element);
 			if(!FormCreationHelper.fincode(questionnaire.get(numLigne))){ // si c'est la fin du code
 				//Si la ligne est a exclure
 				/*if(premier_element.contains(aExclure.firstElement()) & !aExclure.firstElement().equals("")){
@@ -155,20 +157,19 @@ public class Fenetres {
 				if(nbpagestitre <1) {
 					titremultipage ="";
 				}
+				System.out.println(premier_element);
+				System.out.println(FormCreationHelper.titremultipages(ligne));
 				if(premier_element.trim().length()<=0) {
 					suivantQuestionnaire(numLigne + 1);
-				}
-				//si c'est un titre multipage
-				if(FormCreationHelper.titremultipages(ligne)!= -1) {
+				//si c'est un titre multipage	
+				}else if(FormCreationHelper.titremultipages(ligne)!= -1) {
 					titremultipage = FormCreationHelper.retireMarqueurs(premier_element);
 					nbpagestitre = FormCreationHelper.titremultipages(ligne);
 					suivantQuestionnaire(numLigne + 1);
-				}
 				//si la ligne contient une question
-				if(FormCreationHelper.isaquestion(ligne)) {
+				}else if(FormCreationHelper.isaquestion(ligne)) {
 					if(FormCreationHelper.hastoanswerquestion(marqueurs, ligne)) {
 						if(FormCreationHelper.isquestiontoaskmanytimes(ligne)){
-							System.out.println("dans suivantequestion : " +premier_element);
 							questionAjout(numLigne);
 						}
 						else {
@@ -204,7 +205,7 @@ public class Fenetres {
 				}
 			}
 			else {
-				//si c'est la fin du code
+				afficherQuestionnaires(numLigne);
 			}
 		}
 		else {
@@ -361,18 +362,15 @@ public class Fenetres {
 					if(choix_complet.indexOf("*") >= 0) {
 						
 						int i =choix_complet.indexOf("*");
-						System.out.println("il y a un questionnaire index * : "+ i);
 						if(choix_complet.charAt(i+1) =='(') {
-							System.out.println("une ( suit l'*");
 							i= i+2;
 							String questionaire = "";
 							while(i<choix_complet.length() && choix_complet.charAt(i)!=')') {
-								System.out.println("i : "+i+" char : "+choix_complet.charAt(i));
 								questionaire = questionaire + choix_complet.charAt(i);
 								i++;
 							}
 							if(choix_complet.charAt(i)==')') {
-								questionairesfinals.add(questionaire);
+								questionairesfinaux.add(questionaire);
 							}
 						}
 						if(i<choix_complet.length()-1 && choix_complet.charAt(i+1)=='(') {
@@ -424,8 +422,6 @@ public class Fenetres {
 	private void questionAjout(int numLigne){
 		ArrayList<String> infosQuestion = questionnaire.get(numLigne);
 		Vector<String> v_choix = new Vector<String>();
-		System.out.println("dans question ajout");
-		System.out.println("question : " + infosQuestion.get(0));
 		
 		JFrame question;
 		question = new JFrame();
@@ -520,9 +516,8 @@ public class Fenetres {
 	}
 	
 	private void questionsRepetees(int numLigne, int ligneDebut, int id_nom_courant, Vector<String> v_choix, Vector<String> v_noms){
-		String case3 = questionnaire.get(numLigne).get(3);
+		//String case3 = questionnaire.get(numLigne).get(3);
 		ArrayList<String> infosQuestion = questionnaire.get(numLigne);
-		System.out.println("Dans questionrepetes "+ infosQuestion.get(0));
 		
 		JFrame question;
 		question = new JFrame();
@@ -597,7 +592,6 @@ public class Fenetres {
 			btnSuivant.setEnabled(false);
 			btnSuivant.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent arg0) {
-					System.out.println("Boutonsuivant de question multiple");
 					//Chercher et enregistrer la reponse
 					String choix = jtfReponse.getText();
 					v_choix.addElement(choix);
@@ -605,18 +599,14 @@ public class Fenetres {
 					question.dispose();
 					//Si on est au dernier nom de la liste
 					if(id_nom_courant == v_noms.size() - 1){
-						System.out.println("C'est le dernier prenom de la liste");
 						//On enregistre le vecteur de reponses
 						reponse.put(numLigne, v_choix);
 						//Si on est a la derniere question a poser plusieurs fois
-						System.out.println("dans multiple question, question suivante : " +questionnaire.get(numLigne + 1).get(0) );
 						if(!FormCreationHelper.isquestiontoaskmanytimes(questionnaire.get(numLigne + 1))){
 							//On passe a la prochaine question
-							System.out.println("la question suivante est normale");
 							suivantQuestionnaire(numLigne + 1);
 						} else {
 							//On passe a la prochaine question
-							System.out.println("la question suivante est multiple");
 							questionsRepetees(numLigne + 1, numLigne + 1, 0, new Vector<String> (), v_noms);
 							
 						}
@@ -677,7 +667,7 @@ public class Fenetres {
 								i++;
 							}
 							if(choix_complet.charAt(i)==')') {
-								questionairesfinals.add(questionnaire);
+								questionairesfinaux.add(questionnaire);
 							}
 						}
 						if(i<choix_complet.length()-1 && choix_complet.charAt(i+1)=='(') {
@@ -729,4 +719,46 @@ public class Fenetres {
 		}
 	}
 
+	private void sauvegarder(){
+		try{
+			String nomFichier = JOptionPane.showInputDialog("Nom du fichier à enregistrer : ");
+			BufferedWriter br = new BufferedWriter(new FileWriter(nomFichier));
+			Set<Integer> cles = reponse.keySet();
+			for(Iterator<Integer> it = cles.iterator(); it.hasNext(); ) {
+		       br.write(reponse.get(cles.iterator().next()).toString());
+		}
+		br.close();
+		} catch(IOException e){
+			e.printStackTrace();
+		}
+	}
+	
+	private void afficherQuestionnaires(int ligne){
+		boolean ajouter = false;
+		String liste = "<html>Questionnaires à remplir :<br>";
+		while(ligne < questionnaire.size()){
+			int index = questionnaire.get(ligne).indexOf("(");
+			if(index == 0){
+				if(questionairesfinaux.contains(questionnaire.get(ligne))){
+					ajouter = true;
+				}
+			} else if(index == 4){
+				ajouter = false;
+			} else if(ajouter){
+				liste = liste + questionnaire.get(ligne) + "<br>";
+			}
+		}
+		liste = liste + "</html>";
+		JFrame listeQ;
+		listeQ = new JFrame();
+		listeQ.setBounds(100, 100, 554, 214);
+		listeQ.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		listeQ.setVisible(true);
+		
+		JLabel lblListe = new JLabel(liste);
+		lblListe.setFont(new Font("Trebuchet MS", Font.PLAIN, 20));
+		lblListe.setHorizontalAlignment(SwingConstants.CENTER);
+		listeQ.add(lblListe, BorderLayout.NORTH);
+		
+	}
 }

@@ -127,31 +127,20 @@ public class FormCreationHelper {
 		if(a.size()>0 && a.get(0).length()>0) {
 			String atester = a.get(0);
 			atester = atester.trim();
+			System.out.println(atester.substring(atester.length()-1));
 		
-			if(atester.charAt(atester.length()-1)== ')') {
-				String nombreenvers = "";
-				boolean fin = false;
-				boolean pasnombre = false;
-				for(int i = atester.length()-1; i>=0 && !fin && !pasnombre ;i--) {
-					if(atester.charAt(i)=='(') {
-						fin = true;
-					}
-					else if(Character.isDigit(atester.charAt(i))){
-						nombreenvers = nombreenvers + atester.charAt(i);
-					}
-					else {
-						pasnombre =true;
-					}
-				}
-				if(!pasnombre && fin) {
-					String nombreendroit = "";
-					for(int i = nombreenvers.length()-1; i>=0 ; i--) {
-						nombreendroit = nombreendroit + nombreenvers.charAt(i);
-					}
-					res = Integer.parseInt(nombreendroit);
-				}
-				
-
+			if(atester.substring(atester.length()-1).equals(")")) {
+				String marqueur = atester.substring(atester.indexOf("(") + 1, atester.length()-1);
+				System.out.println(marqueur);
+				try  
+				  {  
+				    int i = Integer.parseInt(marqueur);  
+				    res = i;
+				  }  
+				  catch(NumberFormatException nfe)  
+				  {  
+				    return res;  
+				  }  
 			}
 		}
 		return res;
@@ -227,10 +216,7 @@ public class FormCreationHelper {
 	
 	public static boolean hastoanswerquestion(ArrayList<String> marqueurs , ArrayList<String> a) {
 		boolean res = true;
-		System.out.println("dans hastoanswer");
 		ArrayList<String> marqueursquestion = hasmarqueur(a);
-		System.out.println(marqueurs.toString());
-		System.out.println(marqueursquestion.toString());
 		for(int i = 0; i<marqueursquestion.size() && res; i++) {
 			boolean trouve=false;;
 			for(int j=0; j<marqueurs.size(); j++) {
