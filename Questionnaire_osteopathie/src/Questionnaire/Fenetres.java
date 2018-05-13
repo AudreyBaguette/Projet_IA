@@ -14,10 +14,8 @@ import javax.swing.event.DocumentListener;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
@@ -29,7 +27,7 @@ import javax.swing.JSplitPane;
 import javax.swing.JTextField;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeMap;
@@ -45,7 +43,7 @@ public class Fenetres {
 	private int nbpagestitre =0;
 	private String titremultipage = "";
 	private ArrayList<String> marqueurs = new ArrayList<String>();
-	private ArrayList<String> questionairesfinaux = new ArrayList<String>() ;
+	private TreeMap<Integer, Vector<String>> questionairesfinaux = new TreeMap<Integer, Vector<String>>() ;
 
 	/**
 	 * Launch the application.
@@ -57,7 +55,6 @@ public class Fenetres {
 					reponse = new TreeMap<Integer, Vector<String>>();
 					Fenetres window = new Fenetres();
 					window.frame.setVisible(true);
-					window.sauvegarder();
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -157,8 +154,6 @@ public class Fenetres {
 				if(nbpagestitre <1) {
 					titremultipage ="";
 				}
-				System.out.println(premier_element);
-				System.out.println(FormCreationHelper.titremultipages(ligne));
 				if(premier_element.trim().length()<=0) {
 					suivantQuestionnaire(numLigne + 1);
 				//si c'est un titre multipage	
@@ -205,6 +200,8 @@ public class Fenetres {
 				}
 			}
 			else {
+				System.out.println(reponse.toString());
+				System.out.println(questionairesfinaux.toString());
 				afficherQuestionnaires(numLigne);
 			}
 		}
@@ -249,7 +246,6 @@ public class Fenetres {
 	}
 	
 	private void questionSimple(int numLigne){
-		String case3 = questionnaire.get(numLigne).get(3);
 		ArrayList<String> infosQuestion = questionnaire.get(numLigne);
 		
 		JFrame question;
@@ -320,7 +316,7 @@ public class Fenetres {
 				}
 			});
 			
-		//Il s'agit d<une question a choix multiples
+		//Il s'agit d'une question a choix multiples
 		} else {
 			JComboBox<String> cbReponse = new JComboBox<String>();
 			question.add(cbReponse, BorderLayout.CENTER);
@@ -337,40 +333,37 @@ public class Fenetres {
 			
 			btnSuivant.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent arg0) {
+					//
+					if(questionairesfinaux.containsKey(numLigne)){
+						questionairesfinaux.remove(numLigne);
+					}
 					//Chercher et enregistrer la reponse
 					String choix = cbReponse.getSelectedItem().toString();
 					//Si le choix initial a un marqueur, on le recupere
 					String choix_complet = infosQuestion.get(cbReponse.getSelectedIndex() + 3).trim();
-					/*if(choix_complet.indexOf("*") >= 0){
-						String marqueur = choix_complet.substring(choix_complet.indexOf("("));
-						int i_marqueur2 = marqueur.substring(1).indexOf("(");
-						//Si une parenthese, c'est un marqueur de questionnaire
-						if(i_marqueur2 == -1){
-							String nom = "";
-							if(infosQuestion.get(2).length() > 0){
-								int ligne = Character.getNumericValue(infosQuestion.get(2).charAt(0));
-								nom = reponse.get(numLigne-ligne).lastElement();
-							}
-							listeQuestionnaires.put(choix_complet.substring(choix_complet.indexOf("*")+1), nom);
-						//Si deux parenthese, c'est un marqueur d'exclusion de questions
-						} else {
-							marqueurs.add(e)
-							aExclure.set(0, marqueur.substring(0, i_marqueur2));
-							aExclure.set(1, marqueur.substring(i_marqueur2));
-						}
-					}*/
 					if(choix_complet.indexOf("*") >= 0) {
 						
 						int i =choix_complet.indexOf("*");
 						if(choix_complet.charAt(i+1) =='(') {
 							i= i+2;
-							String questionaire = "";
+							String nomQuestionaire = "";
 							while(i<choix_complet.length() && choix_complet.charAt(i)!=')') {
-								questionaire = questionaire + choix_complet.charAt(i);
+								nomQuestionaire = nomQuestionaire + choix_complet.charAt(i);
 								i++;
 							}
 							if(choix_complet.charAt(i)==')') {
-								questionairesfinaux.add(questionaire);
+								String case3 = infosQuestion.get(2);
+								String nom = "";
+								if(case3.equals("[TEXTE]")){
+									nom = JOptionPane.showInputDialog("Nom : ");
+								} else if (!case3.isEmpty()) {
+									int ligneNom = Integer.parseInt(case3);
+									nom = reponse.get(ligneNom).get(0);
+								}
+								Vector<String> vQuestionnaire = new Vector<String>();
+								vQuestionnaire.addElement(nomQuestionaire);
+								vQuestionnaire.addElement(nom);
+								questionairesfinaux.put(numLigne, vQuestionnaire);
 							}
 						}
 						if(i<choix_complet.length()-1 && choix_complet.charAt(i+1)=='(') {
@@ -634,40 +627,33 @@ public class Fenetres {
 			
 			btnSuivant.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent arg0) {
+					if(questionairesfinaux.containsKey(numLigne)){
+						questionairesfinaux.remove(numLigne);
+					}
 					//Chercher et enregistrer la reponse
 					String choix = cbReponse.getSelectedItem().toString();
 					v_choix.addElement(choix);
 					//Si le choix initial a un marqueur, on le recupere
-					String choix_complet = infosQuestion.get(cbReponse.getSelectedIndex());
-					/*if(choix_complet.indexOf("*") >= 0){
-						String marqueur = choix_complet.substring(choix_complet.indexOf("("));
-						int i_marqueur2 = marqueur.substring(1).indexOf("(");
-						//Si une parenthese, c'est un marqueur de questionnaire
-						if(i_marqueur2 == -1){
-							String nom = "";
-							if(infosQuestion.get(2).length() > 0){
-								int ligne = Character.getNumericValue(infosQuestion.get(2).charAt(0));
-								nom = reponse.get(numLigne-ligne).lastElement();
-							}
-							listeQuestionnaires.put(choix_complet.substring(choix_complet.indexOf("*")+1), nom);
-						//Si deux parenthese, c'est un marqueur d'exclusion de questions
-						} else {
-							aExclure.set(0, marqueur.substring(0, i_marqueur2));
-							aExclure.set(1, marqueur.substring(i_marqueur2));
-							System.out.println(aExclure.toString());
-						}
-					}*/
+					String choix_complet = infosQuestion.get(cbReponse.getSelectedIndex()+ 3).trim();
 					if(choix_complet.indexOf("*")>=0) {
 						int i = choix_complet.indexOf("*");
 						if(choix_complet.charAt(i+1)=='(') {
 							i=i+2;
-							String questionnaire ="";
+							String nomQuestionnaire ="";
 							while(i<choix_complet.length() && choix_complet.charAt(i)!=')') {
-								questionnaire = questionnaire + choix_complet.charAt(i);
+								nomQuestionnaire = nomQuestionnaire + choix_complet.charAt(i);
 								i++;
 							}
 							if(choix_complet.charAt(i)==')') {
-								questionairesfinaux.add(questionnaire);
+								String case3 = infosQuestion.get(2);
+								String nom = "";
+								if(!case3.isEmpty()){
+									nom = v_noms.get(id_nom_courant);
+								}
+								Vector<String> vQuestionnaire = new Vector<String>();
+								vQuestionnaire.addElement(nomQuestionnaire);
+								vQuestionnaire.addElement(nom);
+								questionairesfinaux.put(numLigne, vQuestionnaire);
 							}
 						}
 						if(i<choix_complet.length()-1 && choix_complet.charAt(i+1)=='(') {
@@ -719,33 +705,65 @@ public class Fenetres {
 		}
 	}
 
-	private void sauvegarder(){
+	private void sauvegarder(JButton bouton){
 		try{
-			String nomFichier = JOptionPane.showInputDialog("Nom du fichier à enregistrer : ");
-			BufferedWriter br = new BufferedWriter(new FileWriter(nomFichier));
+			JFileChooser fileChooser = new JFileChooser();
+			File fichier = new File("reponses.txt");
+			if (fileChooser.showSaveDialog(bouton) == JFileChooser.APPROVE_OPTION) {
+			  fichier = fileChooser.getSelectedFile();
+			}
+			BufferedWriter br = new BufferedWriter(new FileWriter(fichier));
 			Set<Integer> cles = reponse.keySet();
 			for(Iterator<Integer> it = cles.iterator(); it.hasNext(); ) {
 		       br.write(reponse.get(cles.iterator().next()).toString());
-		}
-		br.close();
-		} catch(IOException e){
+			}
+			br.close();
+		} catch(Exception e){
 			e.printStackTrace();
 		}
 	}
 	
 	private void afficherQuestionnaires(int ligne){
+		System.out.println("avant");
 		boolean ajouter = false;
+		String quest = "";
+		String marqueur = "";
+		Vector<String> qPoses = new Vector<String>();
 		String liste = "<html>Questionnaires à remplir :<br>";
+		Collection<Vector<String>> qFinaux = questionairesfinaux.values();
+		TreeMap<String, String> nomsQ = new TreeMap<String, String>();
 		while(ligne < questionnaire.size()){
-			int index = questionnaire.get(ligne).indexOf("(");
-			if(index == 0){
-				if(questionairesfinaux.contains(questionnaire.get(ligne))){
-					ajouter = true;
+			if(questionnaire.get(ligne).size() > 0){
+				if(questionnaire.get(ligne).get(0).length() > 0){
+					String premier = questionnaire.get(ligne).get(0);
+					System.out.println(premier);
+					int index = premier.indexOf("(");
+					if(index == 0){
+						marqueur = premier.substring(premier.indexOf("(") + 1, premier.indexOf(")"));
+						System.out.println(marqueur);
+						ajouter = true;
+					} else if(index == 3){
+						ajouter = false;
+						System.out.println("ajout dans map");
+						nomsQ.put(marqueur, quest);
+					} else if(ajouter){
+						quest = quest + premier;
+					}
 				}
-			} else if(index == 4){
-				ajouter = false;
-			} else if(ajouter){
-				liste = liste + questionnaire.get(ligne) + "<br>";
+			}
+			ligne ++;
+		}
+		for(Iterator<Vector<String>> it = qFinaux.iterator(); it.hasNext(); ) {
+			Vector<String> listQ = it.next();
+	       if(nomsQ.containsKey(listQ.firstElement())){
+	    	   String nouveauQ = nomsQ.get(listQ.firstElement());
+	    	   if(!listQ.lastElement().isEmpty()){
+	    		   nouveauQ = nouveauQ + " pour " + listQ.lastElement();
+	    	   }
+	    	   if(!qPoses.contains(nouveauQ)){
+	    		   liste = liste + nouveauQ + "<br>";
+	    		   qPoses.add(nouveauQ);
+	    	   }
 			}
 		}
 		liste = liste + "</html>";
@@ -758,7 +776,17 @@ public class Fenetres {
 		JLabel lblListe = new JLabel(liste);
 		lblListe.setFont(new Font("Trebuchet MS", Font.PLAIN, 20));
 		lblListe.setHorizontalAlignment(SwingConstants.CENTER);
-		listeQ.add(lblListe, BorderLayout.NORTH);
+		listeQ.add(lblListe, BorderLayout.CENTER);
 		
+		JButton sauver = new JButton("Sauvegarder les réponses");
+		sauver.setFont(new Font("Trebuchet MS", Font.PLAIN, 20));
+		sauver.setHorizontalAlignment(SwingConstants.CENTER);
+		listeQ.add(sauver, BorderLayout.SOUTH);
+		
+		sauver.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				sauvegarder(sauver);
+			}
+		});
 	}
 }

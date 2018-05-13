@@ -127,11 +127,8 @@ public class FormCreationHelper {
 		if(a.size()>0 && a.get(0).length()>0) {
 			String atester = a.get(0);
 			atester = atester.trim();
-			System.out.println(atester.substring(atester.length()-1));
-		
 			if(atester.substring(atester.length()-1).equals(")")) {
 				String marqueur = atester.substring(atester.indexOf("(") + 1, atester.length()-1);
-				System.out.println(marqueur);
 				try  
 				  {  
 				    int i = Integer.parseInt(marqueur);  
