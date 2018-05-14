@@ -29,6 +29,7 @@ import javax.swing.JTextField;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.Vector;
@@ -136,6 +137,7 @@ public class Fenetres {
 		if(questionnaire.get(numLigne).size() >0 ) {
 			String premier_element = questionnaire.get(numLigne).get(0);
 			ArrayList<String> ligne = questionnaire.get(numLigne);
+			System.out.println(numLigne + " : "+ premier_element);
 			/*if(numLigne >= lignesCommentaire.lastElement()){
 				commentaire = "";
 			}*/
@@ -308,7 +310,7 @@ public class Fenetres {
 					String choix = jtfReponse.getText();
 					Vector<String> v_choix = new Vector<String>();
 					v_choix.addElement(choix);
-					reponse.put(numLigne, v_choix);
+					reponse.put(numLigne+1, v_choix);
 					//On ouvre une nouvelle fenetre et on ferme la fenetre courante
 					question.dispose();
 					suivantQuestionnaire(numLigne + 1);
@@ -355,7 +357,7 @@ public class Fenetres {
 								String case3 = infosQuestion.get(2);
 								String nom = "";
 								if(case3.equals("[TEXTE]")){
-									nom = JOptionPane.showInputDialog("Nom : ");
+									nom = JOptionPane.showInputDialog("Son nom : ");
 								} else if (!case3.isEmpty()) {
 									int ligneNom = Integer.parseInt(case3);
 									nom = reponse.get(ligneNom).get(0);
@@ -401,7 +403,8 @@ public class Fenetres {
 					}
 					Vector<String> v_choix = new Vector<String>();
 					v_choix.addElement(choix);
-					reponse.put(numLigne, v_choix);
+					reponse.put(numLigne + 1, v_choix);
+					System.out.println("la reponse ajoutée est : "+ reponse.get(numLigne+1));
 					//On ouvre une nouvelle fenetre et on ferme la fenetre courante
 					question.dispose();
 					suivantQuestionnaire(numLigne + 1);
@@ -746,6 +749,7 @@ public class Fenetres {
 						ajouter = false;
 						System.out.println("ajout dans map");
 						nomsQ.put(marqueur, quest);
+						quest="";
 					} else if(ajouter){
 						quest = quest + premier;
 					}
@@ -753,7 +757,7 @@ public class Fenetres {
 			}
 			ligne ++;
 		}
-		for(Iterator<Vector<String>> it = qFinaux.iterator(); it.hasNext(); ) {
+		/*for(Iterator<Vector<String>> it = qFinaux.iterator(); it.hasNext(); ) {
 			Vector<String> listQ = it.next();
 	       if(nomsQ.containsKey(listQ.firstElement())){
 	    	   String nouveauQ = nomsQ.get(listQ.firstElement());
@@ -765,7 +769,33 @@ public class Fenetres {
 	    		   qPoses.add(nouveauQ);
 	    	   }
 			}
-		}
+		}*/
+		
+		// Obtenir l'ensemble des entrées
+        Set set = nomsQ.entrySet();
+     
+        // Obtenir l'iterator pour parcourir la liste
+        Iterator it = set.iterator();
+     
+        // Afficher les pairs clé-valeur
+        while(it.hasNext()) {
+          Map.Entry mentry = (Map.Entry)it.next();
+          /*System.out.print("clé: "+mentry.getKey() + " - ");
+          System.out.println("Valeur: "+mentry.getValue());*/
+          int cle =Integer.parseInt((String)mentry.getKey()); 
+          System.out.println("cle : "+ cle);
+          if(questionairesfinaux.containsKey(cle)) {
+        	  Vector<String> elem = questionairesfinaux.get(cle);
+        	  if(elem.size()>1) {
+        		  liste = liste + elem.get(0)+ " pour " +elem.get(1) +"<br>";
+        	  }
+        	  else if(elem.size()>0 ){
+        		  liste = liste + elem.get(0)+"<br>";
+        		  qPoses.add(elem.get(0));
+        	  }
+          }
+        } 
+		
 		liste = liste + "</html>";
 		JFrame listeQ;
 		listeQ = new JFrame();

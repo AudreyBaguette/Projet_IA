@@ -101,6 +101,7 @@ public class FormCreationHelper {
 				}
 			}
 			else if(atester.indexOf("*") >-1) {
+				System.out.println("dans tocomplite : il y a une *");
 				int i = atester.indexOf("*");
 				i--;
 				if(atester.charAt(i)== ']') {
