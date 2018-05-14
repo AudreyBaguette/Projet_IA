@@ -133,6 +133,9 @@ public class Fenetres {
 		
 		
 	}
+	/*
+	 * Permet de passer à la question suivante
+	 */
 	
 	private void suivantQuestionnaire(int numLigne){
 		if(questionnaire.get(numLigne).size() >0 ) {
@@ -143,16 +146,6 @@ public class Fenetres {
 				commentaire = "";
 			}*/
 			if(!FormCreationHelper.fincode(questionnaire.get(numLigne))){ // si c'est la fin du code
-				//Si la ligne est a exclure
-				/*if(premier_element.contains(aExclure.firstElement()) & !aExclure.firstElement().equals("")){
-					int ligneSuivante = numLigne;
-					while(!questionnaire.get(ligneSuivante).get(0).contains(aExclure.lastElement())){
-						ligneSuivante++;
-					}
-					aExclure.set(0, "");
-					aExclure.set(1, "");
-					suivantQuestionnaire(ligneSuivante + 1);*/
-				//Si il a possibilite d'ajouter plusieurs reponses
 				nbpagestitre --;
 				if(nbpagestitre <1) {
 					titremultipage ="";
@@ -190,15 +183,7 @@ public class Fenetres {
 				}else if(premier_element.endsWith("[PAGE]")){   //@TODO 
 					suivantQuestionnaire(numLigne + 1);
 					//La ligne est un commentaire a garder en debut de question
-				} /*else if((premier_element.indexOf("...") >= 0) | (premier_element.indexOf("â€¦") >= 0)) {
-					//On cherche le nombre de lignes sur lesquelles le commentaire est effectif
-					int index_par = premier_element.indexOf("(");
-					commentaire = premier_element.substring(0, index_par);
-					lignesCommentaire.set(0, numLigne);
-					lignesCommentaire.set(1, numLigne + Character.getNumericValue(premier_element.charAt(index_par + 1)));
-					suivantQuestionnaire(numLigne + 1);
-					//Si la ligne est une question
-				} */else {
+				} else {
 					suivantQuestionnaire(numLigne + 1);
 				}
 			}
@@ -770,8 +755,6 @@ public class Fenetres {
         // Afficher les pairs clé-valeur
         while(it.hasNext()) {
           Map.Entry mentry = (Map.Entry)it.next();
-          /*System.out.print("clé: "+mentry.getKey() + " - ");
-          System.out.println("Valeur: "+mentry.getValue());*/
           Vector<String> val =(Vector<String>) mentry.getValue();
           if(val.size()>0) {
         	  if(nomsQ.containsKey(val.get(0))) {
