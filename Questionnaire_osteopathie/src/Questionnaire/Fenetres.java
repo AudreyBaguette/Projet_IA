@@ -45,7 +45,7 @@ public class Fenetres {
 	private String titremultipage = "";
 	private ArrayList<String> marqueurs = new ArrayList<String>();
 	private TreeMap<Integer, Vector<String>> questionairesfinaux = new TreeMap<Integer, Vector<String>>() ;
-	private String liste;
+	private Vector<String> qPoses;
 
 	/**
 	 * Launch the application.
@@ -712,16 +712,14 @@ public class Fenetres {
 	private void sauvegarder(JButton bouton){
 		try{
 			JFileChooser fileChooser = new JFileChooser();
-			File fichier = new File("reponses.html");
+			File fichier = new File("reponses.text");
 			if (fileChooser.showSaveDialog(bouton) == JFileChooser.APPROVE_OPTION) {
 			  fichier = fileChooser.getSelectedFile();
 			}
 			BufferedWriter br = new BufferedWriter(new FileWriter(fichier));
-			/*Set<Integer> cles = reponse.keySet();
-			for(Iterator<Integer> it = cles.iterator(); it.hasNext(); ) {
-		       br.write(reponse.get(cles.iterator().next()).toString());
-			}*/
-			br.write(liste);
+			for(int i = 0; i<qPoses.size();i++) {
+				br.write(qPoses.get(i)+"\n");
+			}
 			br.close();
 		} catch(Exception e){
 			e.printStackTrace();
@@ -733,8 +731,8 @@ public class Fenetres {
 		boolean ajouter = false;
 		String quest = "";
 		String marqueur = "";
-		Vector<String> qPoses = new Vector<String>();
-		liste = "<html>Questionnaires ра remplir :<br>";
+		qPoses = new Vector<String>();
+		String liste = "<html>Questionnaires ра remplir :<br>";
 		Collection<Vector<String>> qFinaux = questionairesfinaux.values();
 		TreeMap<String, String> nomsQ = new TreeMap<String, String>();
 		while(ligne < questionnaire.size()){
