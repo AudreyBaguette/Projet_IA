@@ -101,14 +101,19 @@ public class FormCreationHelper {
 				}
 			}
 			else if(atester.indexOf("*") >-1) {
-				System.out.println("dans tocomplite : il y a une *");
 				int i = atester.indexOf("*");
 				i--;
+				while(atester.charAt(i)== ' '){
+					i--;
+				}
+				System.out.println("char avant if "+ atester.charAt(i));
 				if(atester.charAt(i)== ']') {
+					System.out.println("char : "+atester.charAt(i));
 					String compare = "[TEXTE]";
 					boolean difference = false;
 					while( i>=0 && !difference) {
 						if(atester.charAt(i)!=compare.charAt(i)) {
+							System.out.println("Diffrence : "+atester.charAt(i)+" "+compare.charAt(i));
 							difference = true;
 						}
 						i--;
