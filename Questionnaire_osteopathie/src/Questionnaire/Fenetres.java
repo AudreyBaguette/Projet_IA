@@ -45,6 +45,7 @@ public class Fenetres {
 	private String titremultipage = "";
 	private ArrayList<String> marqueurs = new ArrayList<String>();
 	private TreeMap<Integer, Vector<String>> questionairesfinaux = new TreeMap<Integer, Vector<String>>() ;
+	private String liste;
 
 	/**
 	 * Launch the application.
@@ -711,15 +712,16 @@ public class Fenetres {
 	private void sauvegarder(JButton bouton){
 		try{
 			JFileChooser fileChooser = new JFileChooser();
-			File fichier = new File("reponses.txt");
+			File fichier = new File("reponses.html");
 			if (fileChooser.showSaveDialog(bouton) == JFileChooser.APPROVE_OPTION) {
 			  fichier = fileChooser.getSelectedFile();
 			}
 			BufferedWriter br = new BufferedWriter(new FileWriter(fichier));
-			Set<Integer> cles = reponse.keySet();
+			/*Set<Integer> cles = reponse.keySet();
 			for(Iterator<Integer> it = cles.iterator(); it.hasNext(); ) {
 		       br.write(reponse.get(cles.iterator().next()).toString());
-			}
+			}*/
+			br.write(liste);
 			br.close();
 		} catch(Exception e){
 			e.printStackTrace();
@@ -732,7 +734,7 @@ public class Fenetres {
 		String quest = "";
 		String marqueur = "";
 		Vector<String> qPoses = new Vector<String>();
-		String liste = "<html>Questionnaires Ã  remplir :<br>";
+		liste = "<html>Questionnaires à  remplir :<br>";
 		Collection<Vector<String>> qFinaux = questionairesfinaux.values();
 		TreeMap<String, String> nomsQ = new TreeMap<String, String>();
 		while(ligne < questionnaire.size()){
@@ -757,22 +759,12 @@ public class Fenetres {
 			}
 			ligne ++;
 		}
-		/*for(Iterator<Vector<String>> it = qFinaux.iterator(); it.hasNext(); ) {
-			Vector<String> listQ = it.next();
-	       if(nomsQ.containsKey(listQ.firstElement())){
-	    	   String nouveauQ = nomsQ.get(listQ.firstElement());
-	    	   if(!listQ.lastElement().isEmpty()){
-	    		   nouveauQ = nouveauQ + " pour " + listQ.lastElement();
-	    	   }
-	    	   if(!qPoses.contains(nouveauQ)){
-	    		   liste = liste + nouveauQ + "<br>";
-	    		   qPoses.add(nouveauQ);
-	    	   }
-			}
-		}*/
+		
+		System.out.println(nomsQ);
+
 		
 		// Obtenir l'ensemble des entrées
-        Set set = nomsQ.entrySet();
+        Set set = questionairesfinaux.entrySet();
      
         // Obtenir l'iterator pour parcourir la liste
         Iterator it = set.iterator();
@@ -782,16 +774,18 @@ public class Fenetres {
           Map.Entry mentry = (Map.Entry)it.next();
           /*System.out.print("clé: "+mentry.getKey() + " - ");
           System.out.println("Valeur: "+mentry.getValue());*/
-          int cle =Integer.parseInt((String)mentry.getKey()); 
-          System.out.println("cle : "+ cle);
-          if(questionairesfinaux.containsKey(cle)) {
-        	  Vector<String> elem = questionairesfinaux.get(cle);
-        	  if(elem.size()>1) {
-        		  liste = liste + elem.get(0)+ " pour " +elem.get(1) +"<br>";
-        	  }
-        	  else if(elem.size()>0 ){
-        		  liste = liste + elem.get(0)+"<br>";
-        		  qPoses.add(elem.get(0));
+          Vector<String> val =(Vector<String>) mentry.getValue();
+          if(val.size()>0) {
+        	  if(nomsQ.containsKey(val.get(0))) {
+        		  String questi = nomsQ.get(val.get(0));
+        		  if(val.size()>1 && !val.get(1).equals("")) {
+        			  liste = liste + questi + " pour " + val.get(1) + "<br>";
+        			  qPoses.add(questi+ " pour "+ val.get(1));
+        		  }
+        		  else {
+        			  liste = liste + questi+ "<br>";
+        			  qPoses.add(questi);
+        		  }
         	  }
           }
         } 
